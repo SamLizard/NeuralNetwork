@@ -4,10 +4,16 @@ from network import NeuralNetwork
 
 
 def main():
-    input_data = np.array([[0, 0, 1, 1], [0, 1, 0, 1]])
-    output_data = np.array([[0, 1, 1, 0]])
+    input_data = np.array([[0, 0],
+                           [0, 1],
+                           [1, 0],
+                           [1, 1]])
+    output_data = np.array([[0],
+                            [1],
+                            [1],
+                            [0]])
 
-    nn = NeuralNetwork(input_data.shape[0], output_data.shape[0], 2, 1)  # (4, 4, 2)
+    nn = NeuralNetwork(inputs=2, outputs=1, hidden_neurons=4, hidden_layers=2)
     nn.train(input_data, output_data)
 
     test = np.array([[1], [0]])

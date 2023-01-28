@@ -38,6 +38,9 @@ class NeuralNetwork:
         return self.output_layer.output
 
     def train(self, input_data: np.ndarray, output_data: np.ndarray, iterations: int = 10000):
-        for i in range(iterations):
+        input_data = input_data.T
+        output_data = output_data.T
+
+        for _ in range(iterations):
             self.forward_prop(input_data)
             self.back_prop(output_data)
