@@ -34,7 +34,7 @@ class NeuralNetwork:
             layer.update(error)
 
     def predict(self, input_data: np.ndarray) -> np.ndarray:
-        self.forward_prop(input_data)
+        self.forward_prop(input_data.T)
         return self.output_layer.output
 
     def train(self, input_data: np.ndarray, output_data: np.ndarray, iterations: int = 10000):
