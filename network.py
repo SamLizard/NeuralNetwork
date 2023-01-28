@@ -3,56 +3,41 @@ import numpy as np
 from layer import Layer
 
 
-def calculate_error(outputs: np.ndarray, answers: np.ndarray) -> np.ndarray:
-    return (answers - outputs) ** 2
+def sigmoid_derivative(x: np.ndarray) -> np.ndarray:
+    return x * (1 - x)
 
 
-class Network:
-    def __init__(self, inputs: int, outputs: int, hidden_layers: int, hidden_neurons: int):
+def calculate_error(previous_weights: np.ndarray, previous_error: np.ndarray, layer_output: np.ndarray) -> np.ndarray:
+    return (previous_weights.T @ previous_error) * sigmoid_derivative(layer_output)
+
+
+class NeuralNetwork:
+    def __init__(self, inputs: int, outputs: int, hidden_neurons: int, hidden_layers: int):
         self.layers = [Layer(inputs, hidden_neurons)] + \
                       [Layer(hidden_neurons, hidden_neurons) for _ in range(hidden_layers - 1)] + \
                       [Layer(hidden_neurons, outputs)]
 
-    def feed_forward(self, inputs: np.ndarray) -> np.ndarray:
-        last_output = inputs
+    @property
+    def output_layer(self) -> Layer:
+        return self.layers[-1]
+
+    def forward_prop(self, input_data: np.ndarray):
         for layer in self.layers:
-            last_output = layer.feed(last_output)
+            input_data = layer.forward(input_data)
 
-        return last_output
+    def back_prop(self, output_data: np.ndarray):
+        error = self.output_layer.output - output_data
+        self.output_layer.update(error)
 
-    def back_propagate(self, errors: np.ndarray):
-        for layer in reversed(self.layers):
-            layer.actualize(errors)
-            errors = layer.errors(errors)
+        for i, layer in reversed(list(enumerate(self.layers[:-1]))):
+            error = calculate_error(self.layers[i + 1].weights, error, layer.output)
+            layer.update(error)
 
-    def train(self, inputs: np.ndarray, answers: np.ndarray):
-        outputs = self.feed_forward(inputs)
-        errors = calculate_error(outputs, answers)
-        self.back_propagate(errors)
+    def predict(self, input_data: np.ndarray) -> np.ndarray:
+        self.forward_prop(input_data)
+        return self.output_layer.output
 
-
-if __name__ == '__main__':
-    # define the network
-    network = Network(inputs=2, outputs=1, hidden_layers=2, hidden_neurons=2)
-
-    # define the training data
-    X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
-    y = np.array([[0], [1], [1], [0]])
-    # test the network
-    test_cases = [
-        [0, 0],
-        [0, 1],
-        [1, 0],
-        [1, 1],
-    ]
-    for test_case in test_cases:
-        output = network.feed_forward(np.array(test_case))
-        print(f"Input: {test_case} Output: {output}")
-
-    # train the network
-    for i in range(10000):
-        network.train(X, y)
-
-    for test_case in test_cases:
-        output = network.feed_forward(np.array(test_case))
-        print(f"Input: {test_case} Output: {output}")
+    def train(self, input_data: np.ndarray, output_data: np.ndarray, iterations: int = 10000):
+        for i in range(iterations):
+            self.forward_prop(input_data)
+            self.back_prop(output_data)

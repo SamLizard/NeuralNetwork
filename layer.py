@@ -1,40 +1,24 @@
 import numpy as np
 
-LEARNING_RATE = 0.01
+LEARNING_RATE = 0.1
 
 
-def sigmoid(x: float):
+def sigmoid(x: np.ndarray) -> np.ndarray:
     return 1 / (1 + np.exp(-x))
 
 
-sigmoid_v = np.vectorize(sigmoid)
-
-
-def sigmoid_derivative(x: np.ndarray) -> np.ndarray:
-    return x * (1 - x)
-
-
 class Layer:
-    def __init__(self, last_neurons: int, neurons: int):
-        self.weights = np.random.uniform(-1, 1, (last_neurons, neurons))
-        self.biases = np.random.uniform(-1, 1, neurons)
-        self.feed_forward_inputs = None
-        self.feed_forward_outputs = None
+    def __init__(self, input_shape: int, neurons: int):
+        self.weights = np.random.rand(neurons, input_shape)
+        self.bias = np.zeros((neurons, 1))
+        self.input = None
+        self.output = None
 
-    def feed(self, inputs: np.ndarray) -> np.ndarray:
-        self.feed_forward_inputs = inputs
-        self.feed_forward_outputs = sigmoid_v(np.dot(inputs, self.weights) + self.biases)
-        return self.feed_forward_outputs
+    def forward(self, input_data: np.ndarray) -> np.ndarray:
+        self.input = input_data
+        self.output = sigmoid(self.weights @ input_data + self.bias)
+        return self.output
 
-    def actualize(self, errors: np.ndarray):
-        # calculate the gradient of the weights and biases using the errors and sigmoid derivative
-        # gradient = LEARNING_RATE * (errors, sigmoid_derivative(self.feed_forward_outputs))
-        gradient = LEARNING_RATE * errors * sigmoid_derivative(self.feed_forward_outputs)
-        # gradient = LEARNING_RATE * errors * sigmoid_derivative(np.dot(self.feed_forward_inputs, self.weights) + self.biases)
-
-        # update the weights and biases using a learning rate
-        self.weights -= np.dot(self.feed_forward_inputs.T, gradient)
-        # self.biases += np.sum(gradient, axis=0)
-
-    def errors(self, errors: np.ndarray) -> np.ndarray:
-        return np.dot(errors, np.transpose(self.weights))  # maybe use dot instead of *
+    def update(self, error: np.ndarray):
+        self.weights -= LEARNING_RATE * (error @ self.input.T)
+        self.bias -= LEARNING_RATE * np.reshape(np.mean(error, axis=1), self.bias.shape)
