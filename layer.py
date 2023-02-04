@@ -16,9 +16,9 @@ class Layer:
 
     def forward(self, input_data: np.ndarray) -> np.ndarray:
         self.input = input_data
-        self.output = sigmoid(self.weights @ input_data + self.bias)
+        self.output = sigmoid(self.weights @ input_data / input_data.nonzero()[0].size + self.bias)
         return self.output
 
     def update(self, error: np.ndarray):
-        self.weights -= LEARNING_RATE * (error @ self.input.T)
+        self.weights -= LEARNING_RATE * (error @ self.input.T) / error[0].size
         self.bias -= LEARNING_RATE * np.reshape(np.mean(error, axis=1), self.bias.shape)

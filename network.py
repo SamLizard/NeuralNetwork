@@ -26,7 +26,7 @@ class NeuralNetwork:
             input_data = layer.forward(input_data)
 
     def back_prop(self, output_data: np.ndarray):
-        error = self.output_layer.output - output_data
+        error = 2 * (self.output_layer.output - output_data) / output_data.size
         self.output_layer.update(error)
 
         for i, layer in reversed(list(enumerate(self.layers[:-1]))):
@@ -34,13 +34,22 @@ class NeuralNetwork:
             layer.update(error)
 
     def predict(self, input_data: np.ndarray) -> np.ndarray:
-        self.forward_prop(input_data.T)
+        input_data = input_data.reshape((input_data[0].size, 1))
+        self.forward_prop(input_data)
         return self.output_layer.output
 
     def train(self, input_data: np.ndarray, output_data: np.ndarray, iterations: int = 10000):
-        input_data = input_data.T
-        output_data = output_data.T
+        # input_data = input_data.T
+        # output_data = output_data.T
+        input_shape = input_data[0].size
+        output_shape = output_data[0].size
 
         for _ in range(iterations):
-            self.forward_prop(input_data)
-            self.back_prop(output_data)
+            for i, o in zip(input_data, output_data):
+                # indices = np.random.randint(0, 60000, batch_size)
+                # batch_input = input_data.T[indices, :].T
+                # batch_output = output_data.T[indices, :].T
+                i = i.reshape((input_shape, 1))
+                o = o.reshape((output_shape, 1))
+                self.forward_prop(i)
+                self.back_prop(o)
