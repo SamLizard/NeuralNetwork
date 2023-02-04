@@ -1,38 +1,63 @@
 import numpy as np
+from colorama import just_fix_windows_console, Fore  # noqa
 
-from network import NeuralNetwork
+from activations import Activation
+from layers import FCLayer, ActivationLayer
+from loss import mse, mse_prime
+from network import Network
 
 
 def main():
-    input_data = np.fromfile("data/train-images-idx3-ubyte", np.uint8, offset=16)
-    input_data = input_data.reshape(60000, 784)
+    x_test, x_train, y_test, y_train = prepare_dataset()
 
-    output_data = np.fromfile("data/train-labels-idx1-ubyte", np.uint8, offset=8)
-    output_data = np.array([np.ravel(np.eye(1, 10, k=n).T) for n in output_data])
+    # Network
+    net = Network([FCLayer(28 * 28, 100),
+                   ActivationLayer(Activation.TANH),
+                   FCLayer(100, 50),
+                   ActivationLayer(Activation.TANH),
+                   FCLayer(50, 10),
+                   ActivationLayer(Activation.TANH)])
 
-    nn = NeuralNetwork(inputs=28 ** 2, outputs=10, hidden_neurons=16, hidden_layers=2)
-    nn.train(input_data, output_data, iterations=10)
+    # train on 1000 samples
+    # as we didn't implement mini-batch GD,
+    # training will be pretty slow if we update at each iteration on 60000 samples...
+    net.use_loss(mse, mse_prime)
+    net.fit(x_train[:1000], y_train[:1000], epochs=35, learning_rate=0.1)
 
-    test_data = np.fromfile("data/t10k-images-idx3-ubyte", np.uint8, offset=16)
-    test_data = test_data.reshape(10000, 784)
-
-    test_output = np.fromfile("data/t10k-labels-idx1-ubyte", np.uint8, offset=8)
-    # test_output = np.array([np.ravel(np.eye(1, 10, k=n).T) for n in output_data])
-
-    out = nn.predict(test_data[0])
-    print(out)
-    print(test_output[0])
+    display_result_colored(net.predict(x_test[0:10]), y_test[:10])
 
 
-def predict(nn: NeuralNetwork, test_input: np.ndarray, threshold: float = 0.5):
-    output = nn.predict(test_input)
+def prepare_dataset():
+    x_train = np.fromfile("data/train-images-idx3-ubyte", np.uint8, offset=16)
+    x_train = x_train.reshape(60000, 1, 28 * 28)
+    x_train = x_train.astype('float32')
+    x_train /= 255
 
-    certainty = output.ravel()[0]
-    if output >= threshold:
-        print(f"Output is 1 with {certainty * 100:.2f}% certainty")
-    else:
-        print(f"Output is 0 with {100 - certainty * 100:.2f}% certainty")
+    y_train = np.fromfile("data/train-labels-idx1-ubyte", np.uint8, offset=8)
+    y_train = np.array([np.ravel(np.eye(1, 10, k=n).T) for n in y_train])
+    y_train = y_train.astype(int)
+
+    x_test = np.fromfile("data/t10k-images-idx3-ubyte", np.uint8, offset=16)
+    x_test = x_test.reshape(10000, 1, 28 * 28)
+    x_test = x_test.astype('float32')
+    x_test /= 255
+
+    y_test = np.fromfile("data/t10k-labels-idx1-ubyte", np.uint8, offset=8)
+    y_test = y_test.astype(int)
+    return x_test, x_train, y_test, y_train
+
+
+def display_result_colored(arrays: np.ndarray, expected_outputs: np.ndarray):
+    for array, output in zip(arrays, expected_outputs):
+        certainty = np.max(array)
+        guessed_number = np.argmax(array)
+        print(f"{Fore.GREEN if guessed_number == output else Fore.RED}{guessed_number}{Fore.RESET}", end=" ")
+        print("with", end=" ")
+        print(f"{Fore.GREEN if certainty >= 0.7 else Fore.RED}{certainty * 100:.2f}%{Fore.RESET}", end=" ")
+        print("certainty. Expected number:", end=" ")
+        print(f"{Fore.BLUE}{output}")
 
 
 if __name__ == '__main__':
+    just_fix_windows_console()
     main()

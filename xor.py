@@ -1,39 +1,33 @@
+import pprint
+
 import numpy as np
 
-from network import NeuralNetwork
+from activations import Activation
+from layers import ActivationLayer, FCLayer
+from loss import mse, mse_prime
+from network import Network
 
 
 def main():
-    input_data = np.array([[0, 0],
-                           [0, 1],
-                           [1, 0],
-                           [1, 1]])
-    output_data = np.array([[0],
-                            [1],
-                            [1],
-                            [0]])
+    # training data
+    x_train = np.array([[[0, 0]], [[0, 1]], [[1, 0]], [[1, 1]]])
+    y_train = np.array([[[0]], [[1]], [[1]], [[0]]])
 
-    nn = NeuralNetwork(inputs=2, outputs=1, hidden_neurons=4, hidden_layers=2)
-    nn.train(input_data, output_data)
+    # network
+    net = Network([FCLayer(2, 4),
+                   ActivationLayer(Activation.TANH),
+                   FCLayer(4, 2),
+                   ActivationLayer(Activation.TANH),
+                   FCLayer(2, 1),
+                   ActivationLayer(Activation.TANH)])
 
-    test = np.array([[1, 0]])
-    predict(nn, test)
-    test = np.array([[0, 0]])
-    predict(nn, test)
-    test = np.array([[0, 1]])
-    predict(nn, test)
-    test = np.array([[1, 1]])
-    predict(nn, test)
+    # train
+    net.use_loss(mse, mse_prime)
+    net.fit(x_train, y_train, epochs=10000, learning_rate=0.1)
 
-
-def predict(nn: NeuralNetwork, test_input: np.ndarray, threshold: float = 0.5):
-    output = nn.predict(test_input)
-
-    certainty = output.ravel()[0]
-    if output >= threshold:
-        print(f"Output is 1 with {certainty * 100:.2f}% certainty")
-    else:
-        print(f"Output is 0 with {100 - certainty * 100:.2f}% certainty")
+    # test
+    out = net.predict(x_train)
+    pprint.pprint(out)
 
 
 if __name__ == '__main__':

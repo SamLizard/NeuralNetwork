@@ -1,46 +1,54 @@
+from typing import List
+
 import numpy as np
 
-from layer import Layer
+from layers import Layer
 
 
-def sigmoid_derivative(x: np.ndarray) -> np.ndarray:
-    return x * (1 - x)
+class Network:
+    def __init__(self, layers: List[Layer]):
+        self.layers = layers
+        self.loss = None
+        self.loss_prime = None
 
+    # set loss to use
+    def use_loss(self, f, f_prime):
+        self.loss = f
+        self.loss_prime = f_prime
 
-def calculate_error(previous_weights: np.ndarray, previous_error: np.ndarray, layer_output: np.ndarray) -> np.ndarray:
-    return (previous_weights.T @ previous_error) * sigmoid_derivative(layer_output)
-
-
-class NeuralNetwork:
-    def __init__(self, inputs: int, outputs: int, hidden_neurons: int, hidden_layers: int):
-        self.layers = [Layer(inputs, hidden_neurons)] + \
-                      [Layer(hidden_neurons, hidden_neurons) for _ in range(hidden_layers - 1)] + \
-                      [Layer(hidden_neurons, outputs)]
-
-    @property
-    def output_layer(self) -> Layer:
-        return self.layers[-1]
-
-    def forward_prop(self, input_data: np.ndarray):
+    def forward_propagation(self, inputs: np.ndarray):
         for layer in self.layers:
-            input_data = layer.forward(input_data)
+            inputs = layer.forward_propagation(inputs)
 
-    def back_prop(self, output_data: np.ndarray):
-        error = self.output_layer.output - output_data
-        self.output_layer.update(error)
+        return inputs
 
-        for i, layer in reversed(list(enumerate(self.layers[:-1]))):
-            error = calculate_error(self.layers[i + 1].weights, error, layer.output)
-            layer.update(error)
+    # predict output for given input
+    def predict(self, input_data):
+        # sample dimension first
+        return [self.forward_propagation(inputs) for inputs in input_data]
 
-    def predict(self, input_data: np.ndarray) -> np.ndarray:
-        self.forward_prop(input_data.T)
-        return self.output_layer.output
+    # train the network
+    def fit(self, x_train, y_train, epochs, learning_rate):
+        # sample dimension first
+        samples = len(x_train)
 
-    def train(self, input_data: np.ndarray, output_data: np.ndarray, iterations: int = 10000):
-        input_data = input_data.T
-        output_data = output_data.T
+        # training loop
+        for i in range(epochs):
+            err = 0
+            for inputs, outputs in zip(x_train, y_train):
+                output = self.forward_propagation(inputs)
 
-        for _ in range(iterations):
-            self.forward_prop(input_data)
-            self.back_prop(output_data)
+                # compute loss (for display purpose only)
+                err += self.loss(outputs, output)
+
+                # backward propagation
+                error = self.loss_prime(outputs, output)
+                for layer in reversed(self.layers):
+                    error = layer.backward_propagation(error, learning_rate)
+
+            # calculate average error on all samples
+            err /= samples
+            print(f'epoch [{i + 1:>5}/{epochs}] error={err:f}')
+
+            if err < 0.0002:
+                break
