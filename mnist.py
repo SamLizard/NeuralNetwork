@@ -3,7 +3,6 @@ from colorama import just_fix_windows_console, Fore  # noqa
 
 from activations import Activation
 from layers import FCLayer, ActivationLayer
-from loss import mse, mse_prime
 from network import Network
 
 
@@ -21,10 +20,9 @@ def main():
     # train on 1000 samples
     # as we didn't implement mini-batch GD,
     # training will be pretty slow if we update at each iteration on 60000 samples...
-    net.use_loss(mse, mse_prime)
     net.fit(x_train[:1000], y_train[:1000], epochs=35, learning_rate=0.1)
 
-    display_result_colored(net.predict(x_test[0:10]), y_test[:10])
+    display_result_colored(net.predict(x_test[0:20]), y_test[:20])
 
 
 def prepare_dataset():

@@ -4,7 +4,6 @@ import numpy as np
 
 from activations import Activation
 from layers import ActivationLayer, FCLayer
-from loss import mse, mse_prime
 from network import Network
 
 
@@ -22,7 +21,6 @@ def main():
                    ActivationLayer(Activation.TANH)])
 
     # train
-    net.use_loss(mse, mse_prime)
     net.fit(x_train, y_train, epochs=10000, learning_rate=0.1)
 
     # test

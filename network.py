@@ -3,13 +3,14 @@ from typing import List
 import numpy as np
 
 from layers import Layer
+from loss import mse, mse_prime
 
 
 class Network:
     def __init__(self, layers: List[Layer]):
         self.layers = layers
-        self.loss = None
-        self.loss_prime = None
+        self.loss = mse
+        self.loss_prime = mse_prime
 
     # set loss to use
     def use_loss(self, f, f_prime):
