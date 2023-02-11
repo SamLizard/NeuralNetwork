@@ -34,22 +34,26 @@ class NeuralNetwork:
             layer.update(error)
 
     def predict(self, input_data: np.ndarray) -> np.ndarray:
-        input_data = input_data.reshape((input_data[0].size, 1))
+        input_data = input_data.reshape((input_data.shape[0], 1))
         self.forward_prop(input_data)
         return self.output_layer.output
 
-    def train(self, input_data: np.ndarray, output_data: np.ndarray, iterations: int = 10000):
-        # input_data = input_data.T
-        # output_data = output_data.T
+    def train(self, input_data: np.ndarray, output_data: np.ndarray, iterations: int = 1):
         input_shape = input_data[0].size
         output_shape = output_data[0].size
 
-        for _ in range(iterations):
+        for iteration in range(iterations):
             for i, o in zip(input_data, output_data):
-                # indices = np.random.randint(0, 60000, batch_size)
-                # batch_input = input_data.T[indices, :].T
-                # batch_output = output_data.T[indices, :].T
                 i = i.reshape((input_shape, 1))
                 o = o.reshape((output_shape, 1))
                 self.forward_prop(i)
                 self.back_prop(o)
+
+            accuracy = self.accuracy(input_data[:1000], output_data[:1000]) * 100
+            print(f'epoch [{iteration + 1:>5}/{iterations}] accuracy={accuracy :.2f}%')
+
+    def accuracy(self, inputs: np.ndarray, expected_outputs: np.ndarray):
+        if expected_outputs.size != inputs.shape[0]:
+            expected_outputs = np.apply_along_axis(np.argmax, 1, expected_outputs)
+
+        return sum(np.argmax(self.predict(test)) == output for test, output in zip(inputs, expected_outputs)) / inputs.shape[0]
