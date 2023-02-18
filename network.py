@@ -57,3 +57,14 @@ class NeuralNetwork:
             expected_outputs = np.apply_along_axis(np.argmax, 1, expected_outputs)
 
         return sum(np.argmax(self.predict(test)) == output for test, output in zip(inputs, expected_outputs)) / inputs.shape[0]
+
+    def save(self, file_path: str):
+        weights = np.array([layer.weights for layer in self.layers], dtype=object)
+        biases = np.array([layer.bias for layer in self.layers], dtype=object)
+        np.savez(file_path, weights=weights, biases=biases)
+
+    def load(self, file_path: str):
+        data = np.load(file_path, allow_pickle=True)
+        for i, layer in enumerate(self.layers):
+            layer.weights = data['weights'][i]
+            layer.bias = data['biases'][i]

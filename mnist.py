@@ -4,7 +4,7 @@ from colorama import Fore
 from network import NeuralNetwork
 
 
-def main():
+def create_nn():
     input_data = np.fromfile("data/train-images-idx3-ubyte", np.uint8, offset=16)
     input_data = input_data.reshape(60000, 784)
     input_data = input_data.astype('float32')
@@ -15,20 +15,10 @@ def main():
     output_data = output_data.astype(int)
 
     nn = NeuralNetwork(inputs=28 ** 2, outputs=10, hidden_neurons=16, hidden_layers=2)
-    nn.train(input_data, output_data, iterations=1)
+    nn.train(input_data, output_data, iterations=50)
 
-    test_data = np.fromfile("data/t10k-images-idx3-ubyte", np.uint8, offset=16)
-    test_data = test_data.reshape(10000, 784)
-    test_data = test_data.astype('float32')
-    test_data /= 255
-
-    test_output = np.fromfile("data/t10k-labels-idx1-ubyte", np.uint8, offset=8)
-    # test_output = np.array([np.ravel(np.eye(1, 10, k=n).T) for n in output_data])
-    test_output = test_output.astype(int)
-
-    predict(nn, test_data[:50], test_output[:50])
-
-    print(f"The neural network accuracy is: {nn.accuracy(test_data, test_output) * 100:.2f}%")
+    nn.save('./nn_trained/trained_neural_network_50.npz')
+    return nn
 
 
 def predict(nn: NeuralNetwork, test_inputs: np.ndarray, expected_outputs: np.ndarray):
@@ -47,5 +37,23 @@ def display_result_colored(arrays: np.ndarray, expected_outputs: np.ndarray):
         print(f"{Fore.BLUE}{output}{Fore.RESET}")
 
 
+def test_neural_network(nn: NeuralNetwork):
+    test_data = np.fromfile("data/t10k-images-idx3-ubyte", np.uint8, offset=16)
+    test_data = test_data.reshape(10000, 784)
+    test_data = test_data.astype('float32')
+    test_data /= 255
+
+    test_output = np.fromfile("data/t10k-labels-idx1-ubyte", np.uint8, offset=8)
+    test_output = test_output.astype(int)
+
+    predict(nn, test_data[:50], test_output[:50])
+
+    print(f"The neural network accuracy is: {nn.accuracy(test_data, test_output) * 100:.2f}%")
+
+
 if __name__ == '__main__':
-    main()
+    # nn = create_nn()
+    # test_neural_network(nn)
+    nn = NeuralNetwork(inputs=28 ** 2, outputs=10, hidden_neurons=16, hidden_layers=2)
+    nn.load('./nn_trained/trained_neural_network_50.npz')
+    test_neural_network(nn)
