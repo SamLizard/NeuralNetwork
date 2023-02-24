@@ -1,0 +1,30 @@
+To crop an image to a square without removing any black pixels, you can find the smallest square bounding box that contains all the non-zero pixels in the image, and then crop the image to that size.
+
+Here's an example of how to do this in Python:
+
+
+import numpy as np
+
+def crop_image(image):
+    # find the smallest square bounding box that contains all non-zero pixels
+    rows, cols = np.nonzero(image)
+    top = np.min(rows)
+    bottom = np.max(rows)
+    left = np.min(cols)
+    right = np.max(cols)
+    size = max(bottom - top, right - left) + 1
+
+    # create a new image of the desired size and copy the non-zero pixels into it
+    cropped_image = np.zeros((size, size))
+    cropped_image[top:top+size, left:left+size] = image[top:top+size, left:left+size]
+
+    return cropped_image
+
+
+This function takes an image as input and returns a cropped version of the image that is a square. The function first finds the smallest square bounding box that contains all the non-zero pixels in the image using np.nonzero() to find the indices of all the non-zero pixels, and then computing the min and max values of these indices.
+
+Next, the function determines the size of the square to crop to by taking the maximum difference between the top and bottom rows and the left and right columns, and adding 1. The +1 is added to ensure that all non-zero pixels are included in the cropped image.
+
+Finally, the function creates a new image of the desired size and copies the non-zero pixels from the original image into the new image at the appropriate location.
+
+You can use this function to crop your drawn images to a square before centering them and feeding them into your neural network.
